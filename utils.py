@@ -33,7 +33,8 @@ CRITIC FEEDBACK
 {state['feedback']}
 """
 
-    pdf.multi_cell(0,10,text)
+    text = text.encode("latin-1", "replace").decode("latin-1")
+    pdf.multi_cell(0, 10, text)
 
     filename = "research_report.pdf"
 
