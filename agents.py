@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
 
 from langgraph.prebuilt import create_react_agent
@@ -11,24 +12,61 @@ from tools import web_search, web_scrape
 load_dotenv()
 
 # ==========================================
-# LLM Configuration
+# Safe Secret Getter
 # ==========================================
 
-MODEL_NAME = os.getenv(
+def get_secret(key, default=None):
+
+    value = os.getenv(key)
+
+    if value:
+        return value
+
+    try:
+        return st.secrets[key]
+    except:
+        return default
+
+
+# ==========================================
+# Environment Variables
+# ==========================================
+
+OPENROUTER_API_KEY = get_secret(
+    "OPENROUTER_API_KEY"
+)
+
+MODEL_NAME = get_secret(
     "OPENAI_MODEL",
     "google/gemini-3.1-flash-lite"
 )
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+BASE_URL = get_secret(
+    "OPENAI_BASE_URL",
+    "https://openrouter.ai/api/v1"
+)
+
+
+# ==========================================
+# Debug
+# ==========================================
 
 print("Model:", MODEL_NAME)
-print("Base URL:", "https://openrouter.ai/api/v1")
-print("Key Prefix:", OPENROUTER_API_KEY[:10])
+print("Base URL:", BASE_URL)
+
+if OPENROUTER_API_KEY:
+    print("OpenRouter key loaded successfully")
+else:
+    print("OpenRouter key NOT found")
+    
+# ==========================================
+# LLM
+# ==========================================
 
 llm = ChatOpenAI(
     model=MODEL_NAME,
     api_key=OPENROUTER_API_KEY,
-    base_url="https://openrouter.ai/api/v1",
+    base_url=BASE_URL,
     temperature=0,
     max_tokens=2000,
 )
@@ -101,7 +139,6 @@ Do not invent information.
 Write detailed and factual reports.
 """
     ),
-
     (
         "human",
         """
@@ -131,7 +168,6 @@ Make the report clear and well-structured.
 
 writer_chain = writer_prompt | llm | StrOutputParser()
 
-
 # ==========================================
 # Fact Checker Chain
 # ==========================================
@@ -159,7 +195,6 @@ Potential Issues
 Confidence Score (/10)
 """
     ),
-
     (
         "human",
         """
@@ -176,7 +211,6 @@ fact_checker_chain = (
     | StrOutputParser()
 )
 
-
 # ==========================================
 # Critic Chain
 # ==========================================
@@ -192,7 +226,6 @@ Evaluate quality honestly.
 Provide actionable feedback.
 """
     ),
-
     (
         "human",
         """

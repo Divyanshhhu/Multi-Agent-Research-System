@@ -4,10 +4,36 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import requests
 import os
+import streamlit as st
 
 load_dotenv()
 
-tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+
+# ==========================================
+# Safe Secret Getter
+# ==========================================
+
+def get_secret(key, default=None):
+
+    value = os.getenv(key)
+
+    if value:
+        return value
+
+    try:
+        return st.secrets[key]
+    except:
+        return default
+
+
+# ==========================================
+# Tavily Client
+# ==========================================
+
+TAVILY_API_KEY = get_secret("TAVILY_API_KEY")
+
+tavily = TavilyClient(TAVILY_API_KEY)
+
 
 
 # ==========================================
